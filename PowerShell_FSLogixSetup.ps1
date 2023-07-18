@@ -1,26 +1,11 @@
-﻿<#Author       : Dean Cefola
-# Creation Date: 10-15-2020
-# Usage        : Setup FSLogix
-
-#********************************************************************************
-# Date                         Version      Changes
-#------------------------------------------------------------------------
-# 10/15/2020                     1.0        Intial Version
-#
-#
-#*********************************************************************************
-#
-#>
-
 Param (        
-    [Parameter(Mandatory=$true)]
-        [string]$ProfilePath
+        [string]$ProfilePath = "\\placeholder\profiles"
 )
 
 ######################
 #    WVD Variables   #
 ######################
-$LocalWVDpath            = "c:\temp\wvd\"
+$LocalWVDpath            = "c:\temp\AVD\"
 $FSLogixURI              = 'https://aka.ms/fslogix_download'
 $FSInstaller             = 'FSLogixAppsSetup.zip'
 
@@ -29,7 +14,7 @@ $FSInstaller             = 'FSLogixAppsSetup.zip'
 #    Test/Create Temp Directory    #
 ####################################
 if((Test-Path c:\temp) -eq $false) {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "Create C:\temp Directory"
+    Add-Content -LiteralPath C:\New-AVDSessionHost.log "Create C:\temp Directory"
     Write-Host `
         -ForegroundColor Cyan `
         -BackgroundColor Black `
@@ -37,14 +22,14 @@ if((Test-Path c:\temp) -eq $false) {
     New-Item -Path c:\temp -ItemType Directory
 }
 else {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "C:\temp Already Exists"
+    Add-Content -LiteralPath C:\New-AVDSessionHost.log "C:\temp Already Exists"
     Write-Host `
         -ForegroundColor Yellow `
         -BackgroundColor Black `
         "temp directory already exists"
 }
 if((Test-Path $LocalWVDpath) -eq $false) {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "Create C:\temp\WVD Directory"
+    Add-Content -LiteralPath C:\New-WVDSessionHost.log "Create C:\temp\AVD Directory"
     Write-Host `
         -ForegroundColor Cyan `
         -BackgroundColor Black `
@@ -52,7 +37,7 @@ if((Test-Path $LocalWVDpath) -eq $false) {
     New-Item -Path $LocalWVDpath -ItemType Directory
 }
 else {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "C:\temp\WVD Already Exists"
+    Add-Content -LiteralPath C:\New-AVDSessionHost.log "C:\temp\AVD Already Exists"
     Write-Host `
         -ForegroundColor Yellow `
         -BackgroundColor Black `
@@ -71,14 +56,14 @@ Optimize          = $Optimize
 #################################
 #    Download WVD Componants    #
 #################################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Downloading FSLogix"
+Add-Content -LiteralPath C:\New-AVDSessionHost.log "Downloading FSLogix"
     Invoke-WebRequest -Uri $FSLogixURI -OutFile "$LocalWVDpath$FSInstaller"
 
 
 ##############################
 #    Prep for WVD Install    #
 ##############################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Unzip FSLogix"
+Add-Content -LiteralPath C:\New-AVDSessionHost.log "Unzip FSLogix"
 Expand-Archive `
     -LiteralPath "C:\temp\wvd\$FSInstaller" `
     -DestinationPath "$LocalWVDpath\FSLogix" `
@@ -86,13 +71,13 @@ Expand-Archive `
     -Verbose
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 cd $LocalWVDpath 
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "UnZip FXLogix Complete"
+Add-Content -LiteralPath C:\New-AVDSessionHost.log "UnZip FXLogix Complete"
 
 
 #########################
 #    FSLogix Install    #
 #########################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Installing FSLogix"
+Add-Content -LiteralPath C:\New-AVDSessionHost.log "Installing FSLogix"
 $fslogix_deploy_status = Start-Process `
     -FilePath "$LocalWVDpath\FSLogix\x64\Release\FSLogixAppsSetup.exe" `
     -ArgumentList "/install /quiet" `
@@ -120,12 +105,6 @@ Set-ItemProperty `
     -Name "Enabled" `
     -Type "Dword" `
     -Value "1"
-New-ItemProperty `
-    -Path HKLM:\Software\FSLogix\Profiles `
-    -Name "CCDLocations" `
-    -Value "type=smb,connectionString=$ProfilePath" `
-    -PropertyType MultiString `
-    -Force
 Set-ItemProperty `
     -Path HKLM:\Software\FSLogix\Profiles `
     -Name "SizeInMBs" `
@@ -152,8 +131,3 @@ Set-ItemProperty `
     -Type DWord `
     -Value 1
 Pop-Location
-
-
-#############
-#    END    #
-#############
